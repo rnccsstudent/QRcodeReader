@@ -45,10 +45,20 @@
   <h2>📷 Offline QR Code Reader (Back Camera)</h2>
   <div id="reader"></div>
   <p><strong>Scanned Text:</strong></p>
-  <textarea id="output" readonly></textarea>
+  <textarea id="output" readonly style="width: 100%; overflow: hidden;"></textarea>
   <button onclick="copyText()">📋 Copy Text</button>
 
   <script>
+    function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';         // Reset height
+    textarea.style.height = textarea.scrollHeight + 'px'; // Set to full scroll height
+  }
+
+  function setOutputText(text) {
+    const output = document.getElementById('output');
+    output.value = text;
+    autoResizeTextarea(output);
+  }
     function copyText() {
       const textArea = document.getElementById("output");
       textArea.select();
@@ -60,7 +70,7 @@
     const config = { fps: 10, qrbox: 250 };
 
     const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-      document.getElementById("output").value = decodedText;
+      setOutputText(decodedText);
       html5QrCode.stop().catch(err => console.error('Stop failed:', err));
     };
 
