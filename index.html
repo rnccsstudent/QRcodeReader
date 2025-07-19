@@ -82,7 +82,7 @@
   <br />
   <button id="copyBtn">Copy Text</button>
   <button id="downloadBtn">Download Text</button>
-  <button id="openLinkBtn">Open Link</button>
+  <button id="infoBtn">ℹ️ Info Page</button>
 
   <script src="html5-qrcode.min.js"></script>
   <script>
@@ -157,6 +157,10 @@
         alert("Scanned text is not a valid URL.");
       }
     };
+    document.getElementById("infoBtn").onclick = () => {
+  window.location.href = "image.html";
+};
+
   </script>
 </body>
 </html>
