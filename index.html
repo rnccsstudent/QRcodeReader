@@ -89,7 +89,6 @@
     const resultBox = document.getElementById("result");
     const copyBtn = document.getElementById("copyBtn");
     const downloadBtn = document.getElementById("downloadBtn");
-    const openLinkBtn = document.getElementById("openLinkBtn");
 
     function onScanSuccess(decodedText, decodedResult) {
       resultBox.value = decodedText;
@@ -144,19 +143,6 @@
       URL.revokeObjectURL(url);
     };
 
-    openLinkBtn.onclick = () => {
-      const url = resultBox.value.trim();
-      if (
-        url &&
-        (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("www."))
-      ) {
-        // Add http:// if missing for www.
-        const fullUrl = url.startsWith("www.") ? "http://" + url : url;
-        window.open(fullUrl, "_blank");
-      } else {
-        alert("Scanned text is not a valid URL.");
-      }
-    };
     document.getElementById("infoBtn").onclick = () => {
   window.location.href = "image.html";
 };
