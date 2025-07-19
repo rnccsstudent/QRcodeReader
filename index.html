@@ -64,36 +64,44 @@
   <button id="copyBtn">Copy Text</button>
 
   <script src="html5-qrcode.min.js"></script>
-  <script>
-    const resultBox = document.getElementById('result');
-    const copyBtn = document.getElementById('copyBtn');
+<script>
+  const resultBox = document.getElementById('result');
+  const copyBtn = document.getElementById('copyBtn');
 
-    function onScanSuccess(decodedText, decodedResult) {
-      resultBox.value = decodedText;
+  function onScanSuccess(decodedText, decodedResult) {
+    resultBox.value = decodedText;
+  }
+
+  const html5QrCode = new Html5Qrcode("reader");
+
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices && devices.length) {
+      // Try to find the back camera
+      let backCamera = devices.find(device => 
+        device.label.toLowerCase().includes("back")
+      );
+
+      // Fallback to last camera if "back" not found
+      const cameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
+
+      html5QrCode.start(
+        cameraId,
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        onScanSuccess
+      );
     }
+  }).catch(err => {
+    alert("Camera access error: " + err);
+  });
 
-    const html5QrCode = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
-        const cameraId = devices[0].id;
-        html5QrCode.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          onScanSuccess
-        );
-      }
-    }).catch(err => {
-      alert("Camera access error: " + err);
-    });
-
-    copyBtn.onclick = () => {
-      resultBox.select();
-      document.execCommand("copy");
-      alert("Text copied to clipboard!");
-    };
-  </script>
+  copyBtn.onclick = () => {
+    resultBox.select();
+    document.execCommand("copy");
+    alert("Text copied to clipboard!");
+  };
+</script>
 </body>
 </html>
