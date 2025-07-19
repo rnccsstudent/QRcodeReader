@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📁 QR Code Image Scanner (Offline)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #007bff;
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    img#preview-img {
+      max-width: 300px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    textarea {
+      width: 90%;
+      max-width: 400px;
+      height: 100px;
+      margin-top: 20px;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+
+    #copyBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #copyBtn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📁 Upload QR Code Image</h1>
+  <p>100% offline QR code decoder with image resizing</p>
+
+  <input type="file" id="qr-file" accept="image/*" />
+  <br>
+  <img id="preview-img" alt="QR Code Preview" />
+  <br>
+  <textarea id="result" placeholder="Decoded text will appear here..." readonly></textarea>
+  <br>
+  <button id="copyBtn">Copy Text</button>
+
+  <!-- Dummy div for Html5Qrcode -->
+  <div id="dummy" style="display: none;"></div>
+
+  <script src="html5-qrcode.min.js"></script>
+  <script>
+    const resultBox = document.getElementById('result');
+    const copyBtn = document.getElementById('copyBtn');
+    const qrFileInput = document.getElementById('qr-file');
+    const previewImg = document.getElementById('preview-img');
+
+    // Create scanner instance (dummy div required)
+    const scanner = new Html5Qrcode("dummy");
+
+    // Resize image helper function
+    function resizeImage(file, maxWidth, maxHeight, callback) {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          const ratio = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+          canvas.width = img.width * ratio;
+          canvas.height = img.height * ratio;
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(blob => {
+            callback(blob);
+          }, file.type);
+        };
+        img.src = e.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    qrFileInput.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Show preview (original image)
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        previewImg.src = event.target.result;
+        previewImg.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+
+      // Resize then scan the QR code
+      resizeImage(file, 800, 800, resizedBlob => {
+  // Convert Blob back to File (name and type preserved)
+  const resizedFile = new File([resizedBlob], file.name, { type: file.type });
+  scanner.scanFile(resizedFile, true)
+    .then(decodedText => {
+      resultBox.value = decodedText;
+      alert("✅ QR Code decoded successfully!");
+    })
+    .catch(err => {
+      alert("❌ Failed to decode QR code from image: " + err);
+    });
+});
+
+    });
+
+    copyBtn.onclick = () => {
+      resultBox.select();
+      document.execCommand("copy");
+      alert("Text copied to clipboard!");
+    };
+  </script>
+
+</body>
+</html>
