@@ -3,13 +3,49 @@
 <head>
   <title>Offline QR Scanner - Back Camera</title>
   <script src="html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 15px;
+      max-width: 480px;
+      margin: auto;
+    }
+    textarea {
+      width: 100%;          /* Full width on any device */
+      height: 120px;        /* Comfortable height */
+      font-size: 1rem;      /* Easy to read font size */
+      padding: 10px;
+      box-sizing: border-box; /* Include padding in width */
+      resize: vertical;      /* Allow vertical resize if user wants */
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #reader {
+      width: 100%;          /* Make camera container full width */
+      max-width: 320px;     /* Max width */
+      margin: 20px auto;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
   <h2>📷 Offline QR Code Reader (Back Camera)</h2>
-  <div id="reader" style="width: 300px;"></div>
+  <div id="reader"></div>
   <p><strong>Scanned Text:</strong></p>
-  <textarea id="output" rows="5" cols="40" readonly></textarea>
-  <br>
+  <textarea id="output" readonly></textarea>
   <button onclick="copyText()">📋 Copy Text</button>
 
   <script>
@@ -30,7 +66,6 @@
 
     Html5Qrcode.getCameras().then(cameras => {
       if (cameras && cameras.length) {
-        // Find back camera (environment)
         const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[0];
         const cameraId = backCamera.id;
 
