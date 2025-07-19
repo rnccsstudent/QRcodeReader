@@ -33,7 +33,7 @@ This project allows you to scan QR codes **offline** using your PC or mobile bro
 
 ### 2. Run the Scanner
 
-- Open `qr-scanner.html` in any browser.
+- Open `index.html` in any browser.
 - Allow camera access when prompted.
 - Point the camera to a QR code.
 - The scanned text will appear in a box.
@@ -51,7 +51,7 @@ If you don't have `html5-qrcode.min.js`, download from:
 **Mirror (SourceForge):**  
 [Download from SourceForge](https://sourceforge.net/projects/html5-qrcode.mirror/files/v2.3.8/html5-qrcode.min.js/download)
 
-> Save it as `html5-qrcode.min.js` in the same folder as `qr-scanner.html`.
+> Save it as `html5-qrcode.min.js` in the same folder as `index.html`.
 
 ---
 
@@ -70,13 +70,12 @@ This tool does **not use the internet**. All scanning happens locally on your de
 ---
 
 ## 📸 Screenshot
-
-> You can insert a screenshot of the app here  
+ 
 > `![QR Scanner Screenshot](screenshot.png)`
 
 ---
 
 ## 🧑‍💻 Author
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by Pranab Mahata
 
