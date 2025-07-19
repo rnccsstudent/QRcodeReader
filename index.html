@@ -71,6 +71,14 @@
     #infoBtn:hover {
       background-color: #117a8b;
     }
+
+    #Btn {
+      background-color: #17a2b8;
+    }
+
+    #Btn:hover {
+      background-color: #117a8b;
+    }
   </style>
 </head>
 <body>
@@ -83,6 +91,7 @@
   <button id="copyBtn">Copy Text</button>
   <button id="downloadBtn">Download Text</button>
   <button id="infoBtn">Upload Image</button>
+  <button id="Btn">Decoder Text</button>
 
   <script src="html5-qrcode.min.js"></script>
   <script>
@@ -147,6 +156,10 @@
   window.location.href = "image.html";
 };
 
+    document.getElementById("Btn").onclick = () => {
+  window.location.href = "decoder.html";
+};
+    
   </script>
 </body>
 </html>
