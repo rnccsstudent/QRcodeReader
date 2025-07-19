@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Offline QR Scanner</title>
+  <script src="html5-qrcode.min.js"></script>
+</head>
+<body>
+  <h2>📷 Offline QR Code Reader</h2>
+  <div id="reader" style="width:300px;"></div>
+  <p><strong>Scanned Text:</strong></p>
+  <textarea id="output" rows="5" cols="40" readonly></textarea>
+  <br><button onclick="copyText()">📋 Copy Text</button>
+
+  <script>
+    function onScanSuccess(decodedText) {
+      document.getElementById("output").value = decodedText;
+    }
+
+    new Html5Qrcode("reader").start(
+      { facingMode: "environment" }, // Use back camera
+      {
+        fps: 10,
+        qrbox: 250
+      },
+      onScanSuccess
+    );
+
+    function copyText() {
+      var text = document.getElementById("output");
+      text.select();
+      document.execCommand("copy");
+      alert("Copied to clipboard!");
+    }
+  </script>
+</body>
+</html>
