@@ -6,31 +6,50 @@
 </head>
 <body>
   <h2>📷 Offline QR Code Reader</h2>
-  <div id="reader" style="width:300px;"></div>
+  <div id="reader" style="width: 300px;"></div>
   <p><strong>Scanned Text:</strong></p>
   <textarea id="output" rows="5" cols="40" readonly></textarea>
-  <br><button onclick="copyText()">📋 Copy Text</button>
+  <br>
+  <button onclick="copyText()">📋 Copy Text</button>
 
   <script>
-    function onScanSuccess(decodedText) {
-      document.getElementById("output").value = decodedText;
-    }
-
-    new Html5Qrcode("reader").start(
-      { facingMode: "environment" }, // Use back camera
-      {
-        fps: 10,
-        qrbox: 250
-      },
-      onScanSuccess
-    );
-
     function copyText() {
-      var text = document.getElementById("output");
-      text.select();
+      const textArea = document.getElementById("output");
+      textArea.select();
       document.execCommand("copy");
       alert("Copied to clipboard!");
     }
+
+    const html5QrCode = new Html5Qrcode("reader");
+    
+    const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+      document.getElementById("output").value = decodedText;
+      // Stop scanning after first success (optional)
+      html5QrCode.stop().catch(err => console.error('Stop failed:', err));
+    };
+
+    const config = { fps: 10, qrbox: 250 };
+
+    // Start scanning camera
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        // Use first available camera
+        const cameraId = cameras[0].id;
+        html5QrCode.start(
+          cameraId,
+          config,
+          qrCodeSuccessCallback
+        ).catch(err => {
+          console.error('Unable to start scanning:', err);
+          alert('Camera start error: ' + err);
+        });
+      } else {
+        alert("No cameras found.");
+      }
+    }).catch(err => {
+      console.error('Error getting cameras:', err);
+      alert('Camera error: ' + err);
+    });
   </script>
 </body>
 </html>
