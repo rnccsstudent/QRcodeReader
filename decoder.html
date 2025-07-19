@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧩 QR Decoder</title>
+  <script src="pako.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background: #f0f4f8;
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    textarea, pre {
+      width: 100%;
+      max-width: 700px;
+      height: 160px;
+      margin: 12px auto;
+      padding: 12px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fefefe;
+      overflow-x: auto;
+    }
+
+    button {
+      padding: 10px 18px;
+      margin: 8px;
+      font-size: 15px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      textarea, pre {
+        height: auto;
+        font-size: 14px;
+      }
+
+      button {
+        width: 90%;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🧩 QR Text Decoder (Compressed)</h2>
+
+  <textarea id="qrInput" placeholder="Paste compressed base64 QR code text here..."></textarea>
+  <button onclick="decodeQR()">🔍 Decode Text</button>
+
+  <h3>📄 Decoded Output</h3>
+  <pre id="output"></pre>
+  <button onclick="copyText()">📋 Copy</button>
+  <button onclick="downloadText()">⬇️ Download</button>
+
+  <script>
+    const query = new URLSearchParams(window.location.search);
+    const dataFromQR = query.get('data');
+    const qrInput = document.getElementById('qrInput');
+    const output = document.getElementById('output');
+
+    if (dataFromQR) {
+      qrInput.value = decodeURIComponent(dataFromQR);
+      decodeQR();
+    }
+
+    function decodeQR() {
+      try {
+        const base64 = qrInput.value.trim();
+        const binary = atob(base64);
+        const byteArray = Uint8Array.from(binary, c => c.charCodeAt(0));
+        const decompressed = pako.inflate(byteArray, { to: 'string' });
+        output.textContent = decompressed;
+      } catch (e) {
+        output.textContent = "❌ Error decoding:\n" + e;
+      }
+    }
+
+    function copyText() {
+      navigator.clipboard.writeText(output.textContent).then(() => {
+        alert("✅ Text copied!");
+      });
+    }
+
+    function downloadText() {
+      const text = output.textContent;
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "decoded-text.txt";
+      link.click();
+    }
+  </script>
+</body>
+</html>
