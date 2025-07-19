@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📷 Offline QR Code Scanner</title>
   <style>
     body {
@@ -38,19 +38,38 @@
       resize: none;
     }
 
-    #copyBtn {
-      margin-top: 10px;
+    button {
+      margin: 10px 5px 0 5px;
       padding: 10px 20px;
       font-size: 16px;
-      background-color: #28a745;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
 
+    #copyBtn {
+      background-color: #28a745;
+    }
+
     #copyBtn:hover {
       background-color: #218838;
+    }
+
+    #downloadBtn {
+      background-color: #007bff;
+    }
+
+    #downloadBtn:hover {
+      background-color: #0056b3;
+    }
+
+    #openLinkBtn {
+      background-color: #17a2b8;
+    }
+
+    #openLinkBtn:hover {
+      background-color: #117a8b;
     }
   </style>
 </head>
@@ -60,48 +79,84 @@
 
   <div id="reader"></div>
   <textarea id="result" placeholder="Scanned text will appear here..." readonly></textarea>
-  <br>
+  <br />
   <button id="copyBtn">Copy Text</button>
+  <button id="downloadBtn">Download Text</button>
+  <button id="openLinkBtn">Open Link</button>
 
   <script src="html5-qrcode.min.js"></script>
-<script>
-  const resultBox = document.getElementById('result');
-  const copyBtn = document.getElementById('copyBtn');
+  <script>
+    const resultBox = document.getElementById("result");
+    const copyBtn = document.getElementById("copyBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const openLinkBtn = document.getElementById("openLinkBtn");
 
-  function onScanSuccess(decodedText, decodedResult) {
-    resultBox.value = decodedText;
-  }
-
-  const html5QrCode = new Html5Qrcode("reader");
-
-  Html5Qrcode.getCameras().then(devices => {
-    if (devices && devices.length) {
-      // Try to find the back camera
-      let backCamera = devices.find(device => 
-        device.label.toLowerCase().includes("back")
-      );
-
-      // Fallback to last camera if "back" not found
-      const cameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
-
-      html5QrCode.start(
-        cameraId,
-        {
-          fps: 10,
-          qrbox: 250
-        },
-        onScanSuccess
-      );
+    function onScanSuccess(decodedText, decodedResult) {
+      resultBox.value = decodedText;
     }
-  }).catch(err => {
-    alert("Camera access error: " + err);
-  });
 
-  copyBtn.onclick = () => {
-    resultBox.select();
-    document.execCommand("copy");
-    alert("Text copied to clipboard!");
-  };
-</script>
+    const html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras()
+      .then((devices) => {
+        if (devices && devices.length) {
+          let backCamera = devices.find((device) =>
+            device.label.toLowerCase().includes("back")
+          );
+          const cameraId = backCamera
+            ? backCamera.id
+            : devices[devices.length - 1].id;
+
+          html5QrCode.start(
+            cameraId,
+            {
+              fps: 10,
+              qrbox: 250,
+            },
+            onScanSuccess
+          );
+        }
+      })
+      .catch((err) => {
+        alert("Camera access error: " + err);
+      });
+
+    copyBtn.onclick = () => {
+      resultBox.select();
+      document.execCommand("copy");
+      alert("Text copied to clipboard!");
+    };
+
+    downloadBtn.onclick = () => {
+      const text = resultBox.value;
+      if (!text) {
+        alert("No text to download!");
+        return;
+      }
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "scanned-text.txt";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    openLinkBtn.onclick = () => {
+      const url = resultBox.value.trim();
+      if (
+        url &&
+        (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("www."))
+      ) {
+        // Add http:// if missing for www.
+        const fullUrl = url.startsWith("www.") ? "http://" + url : url;
+        window.open(fullUrl, "_blank");
+      } else {
+        alert("Scanned text is not a valid URL.");
+      }
+    };
+  </script>
 </body>
 </html>
