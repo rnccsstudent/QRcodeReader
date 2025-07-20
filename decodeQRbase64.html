@@ -1,27 +1,39 @@
-
 <!DOCTYPE html>
 <html>
-<head>
-  <title>QR Base64 Decoder</title>
-  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-</head>
-<body>
-  <h3>Paste Base64 from QR</h3>
-  <textarea id="base64Input" rows="10" cols="50"></textarea><br>
-  <button onclick="decode()">Decode</button>
-  <pre id="output"></pre>
+  <head>
+    <title>QR Long Text Decoder</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  </head>
+  <body>
+    <h2>📷 Scan QR Code</h2>
+    <div id="reader" style="width: 300px;"></div>
+    <h3>📄 Decoded Output:</h3>
+    <pre id="output" style="white-space: pre-wrap; background: #eee; padding: 10px;"></pre>
 
-  <script>
-    function decode() {
-      const base64 = document.getElementById("base64Input").value.trim();
-      try {
-        const compressedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-        const result = pako.ungzip(compressedData, { to: 'string' });
-        document.getElementById("output").textContent = result;
-      } catch (err) {
-        document.getElementById("output").textContent = "Error: " + err.message;
+    <script>
+      const output = document.getElementById("output");
+
+      function decodeBase64Gzip(base64) {
+        try {
+          const compressed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+          return pako.ungzip(compressed, { to: 'string' });
+        } catch (err) {
+          return "❌ Decode Error: " + err.message;
+        }
       }
-    }
-  </script>
-</body>
+
+      const qrScanner = new Html5Qrcode("reader");
+      qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+          const result = decodeBase64Gzip(decodedText);
+          output.textContent = result;
+          qrScanner.stop(); // stop after one successful scan
+        },
+        (error) => console.warn("QR Error", error)
+      );
+    </script>
+  </body>
 </html>
