@@ -87,6 +87,15 @@
     #base:hover {
       background-color: #117a8b;
     }
+
+    #gen {
+      background-color: #117a8b;
+    }
+
+    #gen:hover {
+      background-color: #117a8b;
+    }
+      
   </style>
 </head>
 <body>
@@ -100,7 +109,8 @@
   <button id="downloadBtn">Download Text</button>
   <button id="infoBtn">Upload Image</button>
   <button id="Btn">Decoder Text</button>
-  <button id="base">decode QR base64</button>
+  <button id="base">Multiple QR decoder</button>
+  <button id="gen">QR Generator</button>
   
 
   <script src="html5-qrcode.min.js"></script>
@@ -171,7 +181,10 @@
 };
 
 document.getElementById("base").onclick = () => {
-  window.location.href = "decodeQRbase64.html";
+  window.location.href = "QRdecoder.html";
+};
+    document.getElementById("base").onclick = () => {
+  window.location.href = "https://offlineqr.netlify.app/";
 };
     
   </script>
