@@ -1,39 +1,102 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>QR Long Text Decoder</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-  </head>
-  <body>
-    <h2>📷 Scan QR Code</h2>
-    <div id="reader" style="width: 300px;"></div>
-    <h3>📄 Decoded Output:</h3>
-    <pre id="output" style="white-space: pre-wrap; background: #eee; padding: 10px;"></pre>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📷 Long Text QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    #reader {
+      width: 320px;
+      margin: 0 auto;
+      margin-top: 10px;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 15px;
+      text-align: left;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📷 Long Text QR Scanner</h2>
+  <p>Scan a QR code containing Base64 Gzip-compressed data</p>
 
-    <script>
-      const output = document.getElementById("output");
+  <div id="reader"></div>
 
-      function decodeBase64Gzip(base64) {
-        try {
-          const compressed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-          return pako.ungzip(compressed, { to: 'string' });
-        } catch (err) {
-          return "❌ Decode Error: " + err.message;
-        }
+  <h3>📄 Decoded Output:</h3>
+  <pre id="output">Waiting for scan...</pre>
+
+  <button onclick="restartScanner()">🔄 Scan Again</button>
+
+  <script>
+    const output = document.getElementById("output");
+    let qrScanner;
+
+    function decodeBase64Gzip(base64) {
+      try {
+        const binary = atob(base64.trim());
+        const byteArray = Uint8Array.from(binary, c => c.charCodeAt(0));
+        const result = pako.ungzip(byteArray, { to: 'string' });
+        return result;
+      } catch (e) {
+        return "❌ Decode Error: " + e.message;
       }
+    }
 
-      const qrScanner = new Html5Qrcode("reader");
+    function startScanner() {
+      qrScanner = new Html5Qrcode("reader");
       qrScanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+        {
+          fps: 5,
+          qrbox: { width: 300, height: 300 }
+        },
         (decodedText) => {
           const result = decodeBase64Gzip(decodedText);
-          output.textContent = result;
-          qrScanner.stop(); // stop after one successful scan
+          if (!result.startsWith("❌")) {
+            output.textContent = result;
+            qrScanner.stop();
+          } else {
+            console.warn("Decode failed. Retrying...");
+          }
         },
-        (error) => console.warn("QR Error", error)
-      );
-    </script>
-  </body>
+        (error) => {
+          // Minimal logging for failed frames
+        }
+      ).catch(err => {
+        output.textContent = "❌ Scanner Error: " + err.message;
+      });
+    }
+
+    function restartScanner() {
+      output.textContent = "Waiting for scan...";
+      Html5Qrcode.getCameras().then(() => {
+        startScanner();
+      }).catch(err => {
+        output.textContent = "❌ Could not restart scanner: " + err.message;
+      });
+    }
+
+    // Start automatically
+    startScanner();
+  </script>
+</body>
 </html>
