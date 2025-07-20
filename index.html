@@ -79,6 +79,14 @@
     #Btn:hover {
       background-color: #117a8b;
     }
+
+    #base {
+      background-color: #17a2b8;
+    }
+
+    #base:hover {
+      background-color: #117a8b;
+    }
   </style>
 </head>
 <body>
@@ -92,6 +100,8 @@
   <button id="downloadBtn">Download Text</button>
   <button id="infoBtn">Upload Image</button>
   <button id="Btn">Decoder Text</button>
+  <button id="base">decode QR base64</button>
+  
 
   <script src="html5-qrcode.min.js"></script>
   <script>
@@ -158,6 +168,10 @@
 
     document.getElementById("Btn").onclick = () => {
   window.location.href = "decoder.html";
+};
+
+document.getElementById("base").onclick = () => {
+  window.location.href = "decodeQRbase64.html";
 };
     
   </script>
