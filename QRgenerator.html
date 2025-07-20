@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Offline QR (kjua)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Must be in the same folder -->
+  <script src="kjua.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 100%;
+      font-size: 16px;
+      padding: 10px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    button {
+      margin: 10px 5px 0 0;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #qrcode {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media (min-width: 600px) {
+      textarea {
+        max-width: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>Long Text QR Generator (Offline)</h2>
+
+  <textarea id="text" rows="8" placeholder="Enter a very long text..."></textarea><br>
+
+  <button onclick="generateQR()">Generate QR</button>
+  <button onclick="downloadAsTxt()">Download as .txt</button>
+  <button onclick="downloadQR()">Download QR</button>
+
+  <div id="qrcode"></div>
+
+  <script>
+    let currentQR = null;
+
+    function generateQR() {
+      const text = document.getElementById("text").value;
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+
+      currentQR = kjua({
+        text: text,
+        size: 300,
+        render: "canvas",  // Needed for download as image
+        correctLevel: 0
+      });
+      // currentQR = kjua({
+      //   text: JSON.stringify(hugeData),
+      //   render: 'canvas',
+      //   ecLevel: "L"
+      // });
+
+      qrContainer.appendChild(currentQR);
+    }
+
+    function downloadAsTxt() {
+      const text = document.getElementById("text").value;
+      const blob = new Blob([text], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "clipboard_saved.txt";
+      link.click();
+    }
+
+    function downloadQR() {
+      if (!currentQR) {
+        alert("Please generate QR first.");
+        return;
+      }
+      const link = document.createElement("a");
+      link.download = "qr_code.png";
+      link.href = currentQR.toDataURL("image/png");
+      link.click();
+    }
+  </script>
+</body>
+</html>
