@@ -1,1 +1,27 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Base64 Decoder</title>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+</head>
+<body>
+  <h3>Paste Base64 from QR</h3>
+  <textarea id="base64Input" rows="10" cols="50"></textarea><br>
+  <button onclick="decode()">Decode</button>
+  <pre id="output"></pre>
+
+  <script>
+    function decode() {
+      const base64 = document.getElementById("base64Input").value.trim();
+      try {
+        const compressedData = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const result = pako.ungzip(compressedData, { to: 'string' });
+        document.getElementById("output").textContent = result;
+      } catch (err) {
+        document.getElementById("output").textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
