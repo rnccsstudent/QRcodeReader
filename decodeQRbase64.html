@@ -1,102 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>📷 Long Text QR Scanner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <meta charset="UTF-8">
+  <title>📦 QR Part Decoder</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: sans-serif;
       padding: 20px;
-      background: #f7f7f7;
+      background: #f9f9f9;
+      color: #333;
+      max-width: 600px;
+      margin: auto;
     }
-    #reader {
-      width: 320px;
-      margin: 0 auto;
-      margin-top: 10px;
+
+    h2 {
+      text-align: center;
     }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
     pre {
+      background: #eee;
+      padding: 10px;
       white-space: pre-wrap;
-      background: #fff;
-      padding: 15px;
-      text-align: left;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      max-height: 300px;
-      overflow-y: auto;
+      word-wrap: break-word;
+      min-height: 100px;
     }
+
     button {
-      margin-top: 15px;
+      margin: 5px;
       padding: 10px 15px;
-      font-size: 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      button {
+        width: 100%;
+        margin-top: 8px;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>📷 Long Text QR Scanner</h2>
-  <p>Scan a QR code containing Base64 Gzip-compressed data</p>
 
-  <div id="reader"></div>
+  <h2>📦 QR Part Decoder</h2>
 
-  <h3>📄 Decoded Output:</h3>
-  <pre id="output">Waiting for scan...</pre>
+  <label for="inputArea">📋 Paste QR Text Parts Below (Even Split Ones):</label>
+  <textarea id="inputArea" placeholder="Paste QR text part here..."></textarea>
 
-  <button onclick="restartScanner()">🔄 Scan Again</button>
+  <div style="text-align:center;">
+    <button onclick="clearStorage()">🧹 Clear</button>
+    <button onclick="decodeAndShow()">🛠️ Reassemble & Decode</button>
+    <button onclick="copyText()">📋 Copy</button>
+    <button onclick="downloadText()">⬇️ Download .txt</button>
+  </div>
+
+  <h3>📄 Decoded Text:</h3>
+  <pre id="output"></pre>
 
   <script>
-    const output = document.getElementById("output");
-    let qrScanner;
+    // Load saved input from localStorage
+    const inputArea = document.getElementById('inputArea');
+    inputArea.value = localStorage.getItem('qr_parts') || '';
 
-    function decodeBase64Gzip(base64) {
-      try {
-        const binary = atob(base64.trim());
-        const byteArray = Uint8Array.from(binary, c => c.charCodeAt(0));
-        const result = pako.ungzip(byteArray, { to: 'string' });
-        return result;
-      } catch (e) {
-        return "❌ Decode Error: " + e.message;
-      }
+    inputArea.addEventListener('input', () => {
+      localStorage.setItem('qr_parts', inputArea.value);
+    });
+
+    function clearStorage() {
+      localStorage.removeItem('qr_parts');
+      inputArea.value = '';
+      document.getElementById('output').textContent = '';
     }
 
-    function startScanner() {
-      qrScanner = new Html5Qrcode("reader");
-      qrScanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 5,
-          qrbox: { width: 300, height: 300 }
-        },
-        (decodedText) => {
-          const result = decodeBase64Gzip(decodedText);
-          if (!result.startsWith("❌")) {
-            output.textContent = result;
-            qrScanner.stop();
-          } else {
-            console.warn("Decode failed. Retrying...");
-          }
-        },
-        (error) => {
-          // Minimal logging for failed frames
+    function decodeAndShow() {
+      const raw = inputArea.value.trim();
+      if (!raw) return;
+
+      // Get all parts and sort them if numbered
+      const lines = raw.split('\n').map(s => s.trim()).filter(Boolean);
+
+      let parts = [], numbered = false;
+      for (let line of lines) {
+        const match = line.match(/^(\d+)\/(\d+)\s+(.+)/);
+        if (match) {
+          numbered = true;
+          parts.push({ index: parseInt(match[1]), total: parseInt(match[2]), data: match[3] });
+        } else {
+          parts.push({ index: parts.length + 1, data: line });
         }
-      ).catch(err => {
-        output.textContent = "❌ Scanner Error: " + err.message;
+      }
+
+      if (numbered) {
+        parts.sort((a, b) => a.index - b.index);
+      }
+
+      const combinedBase64 = parts.map(p => p.data).join('');
+      let decodedText = '';
+
+      try {
+        decodedText = atob(combinedBase64);
+      } catch (e) {
+        decodedText = '[❌ Error decoding Base64]';
+      }
+
+      document.getElementById('output').textContent = decodedText;
+    }
+
+    function copyText() {
+      const text = document.getElementById('output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✅ Copied to clipboard!');
       });
     }
 
-    function restartScanner() {
-      output.textContent = "Waiting for scan...";
-      Html5Qrcode.getCameras().then(() => {
-        startScanner();
-      }).catch(err => {
-        output.textContent = "❌ Could not restart scanner: " + err.message;
-      });
+    function downloadText() {
+      const text = document.getElementById('output').textContent;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'decoded_qr.txt';
+      a.click();
     }
-
-    // Start automatically
-    startScanner();
   </script>
 </body>
 </html>
