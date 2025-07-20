@@ -2,141 +2,107 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📦 QR Part Decoder</title>
+  <title>QR Decoder (Offline & Persistent)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="pako.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f9f9f9;
-      color: #333;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    h2 {
-      text-align: center;
-    }
-
-    textarea {
-      width: 100%;
-      height: 120px;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 14px;
-    }
-
-    pre {
-      background: #eee;
-      padding: 10px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      min-height: 100px;
-    }
-
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      font-size: 14px;
-      border: none;
-      border-radius: 6px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    @media (max-width: 600px) {
-      button {
-        width: 100%;
-        margin-top: 8px;
-      }
-    }
+    body { font-family: Arial, sans-serif; padding: 10px; max-width: 600px; margin: auto; }
+    textarea, button { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
+    button { cursor: pointer; }
+    pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; word-wrap: break-word; }
+    .small { font-size: 14px; color: gray; }
   </style>
 </head>
 <body>
+  <h2>🔓 Paste QR Part (e.g. "1/3:base64...")</h2>
+  <textarea id="input" placeholder="Paste each QR base64 part with header..."></textarea>
+  <button onclick="savePart()">➕ Add This Part</button>
+  <button onclick="clearAll()">🗑️ Clear All Parts</button>
 
-  <h2>📦 QR Part Decoder</h2>
+  <div id="status" class="small"></div>
 
-  <label for="inputArea">📋 Paste QR Text Parts Below (Even Split Ones):</label>
-  <textarea id="inputArea" placeholder="Paste QR text part here..."></textarea>
-
-  <div style="text-align:center;">
-    <button onclick="clearStorage()">🧹 Clear</button>
-    <button onclick="decodeAndShow()">🛠️ Reassemble & Decode</button>
-    <button onclick="copyText()">📋 Copy</button>
-    <button onclick="downloadText()">⬇️ Download .txt</button>
-  </div>
-
-  <h3>📄 Decoded Text:</h3>
-  <pre id="output"></pre>
+  <h2>🧩 Reassembled Output</h2>
+  <pre id="output">Waiting for complete parts...</pre>
+  <button onclick="copyText()">📋 Copy</button>
+  <button onclick="downloadText()">⬇️ Download as .txt</button>
 
   <script>
-    // Load saved input from localStorage
-    const inputArea = document.getElementById('inputArea');
-    inputArea.value = localStorage.getItem('qr_parts') || '';
+    let parts = JSON.parse(localStorage.getItem('qr_parts') || '{}');
 
-    inputArea.addEventListener('input', () => {
-      localStorage.setItem('qr_parts', inputArea.value);
-    });
+    function savePart() {
+      const input = document.getElementById('input').value.trim();
+      const match = input.match(/^(\d+)\/(\d+):(.+)$/);
+      if (!match) {
+        alert("Invalid format. Use: 1/3:base64...");
+        return;
+      }
 
-    function clearStorage() {
-      localStorage.removeItem('qr_parts');
-      inputArea.value = '';
-      document.getElementById('output').textContent = '';
+      const [_, partNum, totalParts, base64] = match;
+      parts[partNum] = base64;
+      localStorage.setItem('qr_parts', JSON.stringify(parts));
+      document.getElementById('input').value = '';
+      updateStatus();
+      tryAssemble(parseInt(totalParts));
     }
 
-    function decodeAndShow() {
-      const raw = inputArea.value.trim();
-      if (!raw) return;
+    function updateStatus() {
+      const keys = Object.keys(parts).map(Number).sort((a,b)=>a-b);
+      document.getElementById('status').textContent = `Saved Parts: ${keys.join(', ')}`;
+    }
 
-      // Get all parts and sort them if numbered
-      const lines = raw.split('\n').map(s => s.trim()).filter(Boolean);
+    function clearAll() {
+      if (confirm("Clear all saved parts?")) {
+        parts = {};
+        localStorage.removeItem('qr_parts');
+        document.getElementById('output').textContent = 'Waiting for complete parts...';
+        updateStatus();
+      }
+    }
 
-      let parts = [], numbered = false;
-      for (let line of lines) {
-        const match = line.match(/^(\d+)\/(\d+)\s+(.+)/);
-        if (match) {
-          numbered = true;
-          parts.push({ index: parseInt(match[1]), total: parseInt(match[2]), data: match[3] });
-        } else {
-          parts.push({ index: parts.length + 1, data: line });
+    function tryAssemble(total) {
+      const collected = Object.keys(parts).length;
+      if (collected < total) {
+        document.getElementById('output').textContent = `Waiting for ${total - collected} more parts...`;
+        return;
+      }
+
+      let joined = '';
+      for (let i = 1; i <= total; i++) {
+        if (!parts[i]) {
+          document.getElementById('output').textContent = `Missing part ${i}`;
+          return;
         }
+        joined += parts[i];
       }
-
-      if (numbered) {
-        parts.sort((a, b) => a.index - b.index);
-      }
-
-      const combinedBase64 = parts.map(p => p.data).join('');
-      let decodedText = '';
 
       try {
-        decodedText = atob(combinedBase64);
-      } catch (e) {
-        decodedText = '[❌ Error decoding Base64]';
+        const binary = atob(joined);
+        const byteArray = Uint8Array.from(binary, c => c.charCodeAt(0));
+        const original = pako.inflate(byteArray, { to: 'string' });
+        document.getElementById('output').textContent = original;
+      } catch (err) {
+        document.getElementById('output').textContent = '❌ Error decoding: ' + err;
       }
-
-      document.getElementById('output').textContent = decodedText;
     }
 
     function copyText() {
-      const text = document.getElementById('output').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('✅ Copied to clipboard!');
-      });
+      const output = document.getElementById('output').textContent;
+      navigator.clipboard.writeText(output).then(() => alert('✅ Copied to clipboard!'));
     }
 
     function downloadText() {
-      const text = document.getElementById('output').textContent;
-      const blob = new Blob([text], { type: 'text/plain' });
+      const output = document.getElementById('output').textContent;
+      const blob = new Blob([output], { type: 'text/plain' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'decoded_qr.txt';
+      a.download = 'decoded.txt';
       a.click();
     }
+
+    // On load
+    updateStatus();
+    const savedTotal = Math.max(...Object.keys(parts).map(Number), 0);
+    if (savedTotal > 0) tryAssemble(savedTotal);
   </script>
 </body>
 </html>
